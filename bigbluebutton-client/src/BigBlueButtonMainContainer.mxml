@@ -29,7 +29,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
   horizontalScrollPolicy="off"
   verticalScrollPolicy="off"
   creationComplete="init()"
-  addedToStage="onAddedToStage()">
+  addedToStage="onAddedToStage()" xmlns:eventMaps="com.conxio.bbb.eventMaps.*">
   
   <mx:Script>
     <![CDATA[
@@ -211,6 +211,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
   <coreMap:BbbCoreEventMap/> 
   <userMap:UsersMainEventMap />
   <maps:ApplicationEventMap />
+	<eventMaps:ClientEventMap/>
 
   
   <views:MainApplicationShell id="mainShell"/>	

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+
+BigBlueButton open source conferencing system - http://www.bigbluebutton.org/
+
+Copyright (c) 2012 BigBlueButton Inc. and by respective authors (see below).
+
+This program is free software; you can redistribute it and/or modify it under the
+terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 3.0 of the License, or (at your option) any later
+version.
+
+BigBlueButton is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along
+with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
+
+-->
+
+<CustomMdiWindow xmlns="org.bigbluebutton.common.*" 
+	       xmlns:mx="http://www.adobe.com/2006/mxml"
+		   xmlns:mate="http://mate.asfusion.com/"
+	       title="Log Window" creationComplete="displayLogMessages();"
+	       showCloseButton="true" xmlns:text="flash.text.*">
+	<mx:Script>
+		<![CDATA[
+			import com.conxio.bbb.managers.ClientManager;
+			
+			import mx.controls.TextArea;
+			private var textField:TextField;
+			
+			private function displayLogMessages():void {
+				this.textField = this.getTextField(this.txtOutput);
+				txtOutput.text = ClientManager.logText;
+			}
+			
+			public function getTextField(component:TextArea):TextField{
+                var len:int = component.numChildren;
+                var r:TextField;
+                for(var i:int=0; i<len; i++){
+                    var thisChild:DisplayObject = component.getChildAt(i);
+                    if(thisChild is TextField){
+                        r = thisChild as TextField;
+                    }
+                }
+                return r;
+            }
+		]]>
+	</mx:Script>
+	<mx:TextArea id="txtOutput" text="" updateComplete="txtOutput.verticalScrollPosition = txtOutput.maxVerticalScrollPosition + 1;"
+		width="100%" height="100%"/>
+	<mx:Button label="refesh" click="displayLogMessages()"/>
+</CustomMdiWindow>

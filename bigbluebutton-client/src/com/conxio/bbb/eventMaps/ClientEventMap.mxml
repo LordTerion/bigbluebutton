@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<EventMap xmlns:mx="http://www.adobe.com/2006/mxml" xmlns="http://mate.asfusion.com/" >
+	<mx:Script>
+		<![CDATA[
+			import com.conxio.bbb.managers.ClientManager;
+			import org.bigbluebutton.main.events.BBBEvent;
+			import org.bigbluebutton.main.events.UserJoinedEvent;
+			import org.bigbluebutton.main.events.UserLeftEvent;
+		]]>
+	</mx:Script>
+	<EventHandlers type="{UserJoinedEvent.JOINED}" >
+		<MethodInvoker generator="{ClientManager}" method="handleUserJoined" arguments="{event}"/> 
+	</EventHandlers>
+	
+	<EventHandlers type="{UserLeftEvent.LEFT}" >
+		<MethodInvoker generator="{ClientManager}" method="handleUserLeft" arguments="{event}"/> 
+	</EventHandlers>
+	
+	<EventHandlers type="{BBBEvent.USER_VOICE_JOINED}" >
+		<MethodInvoker generator="{ClientManager}" method="handleUserVoiceJoined" arguments="{event}"/> 
+	</EventHandlers>
+	
+	<EventHandlers type="{BBBEvent.USER_VOICE_LEFT}" >
+		<MethodInvoker generator="{ClientManager}" method="handleUserVoiceLeft" arguments="{event}"/> 
+	</EventHandlers>
+</EventMap>
