@@ -27,7 +27,7 @@
 	xmlns:mate="http://mate.asfusion.com/"
 	creationComplete="onCreationComplete()"
 	title="{ResourceUtil.getInstance().getString('bbb.users.title')}"
-	showCloseButton="false">
+	showCloseButton="false" xmlns:views="com.conxio.bbb.views.*">
 
 	<mate:Listener type="{LocaleChangeEvent.LOCALE_CHANGED}" method="localeChanged" />
 	<mate:Listener type="{ShortcutEvent.RAISE_HAND}" method="remoteRaiseHand" />
@@ -38,11 +38,14 @@
 	<mx:Script>
 		<![CDATA[
 			import com.asfusion.mate.events.Dispatcher;
+			import com.conxio.bbb.common.BitmapsData;
+			import com.conxio.bbb.views.ForwardCallRequestHelpWindow;
 			
 			import mx.binding.utils.BindingUtils;
 			import mx.collections.ArrayCollection;
 			import mx.controls.Menu;
 			import mx.controls.listClasses.IListItemRenderer;
+			import mx.core.FlexGlobals;
 			import mx.core.IFlexDisplayObject;
 			import mx.events.ListEvent;
 			import mx.events.MenuEvent;
@@ -137,6 +140,9 @@
 				usersGrid.addEventListener(MouseEvent.MOUSE_OVER, handleUsersGridMouseOver);
 				
 				addContextMenuItems();
+				
+				var uid:String = UserManager.getInstance().getConference().getMyExternalUserID();
+				callCenterBox.visible = uid.toLowerCase().indexOf("client") == -1;
 			}
 			
 			public function getPrefferedPosition():String{
@@ -500,35 +506,88 @@
 				muteAlmostAll();
 			}
 			
+			private function addOperatorClick():void
+			{
+				var popupObj:IFlexDisplayObject = PopUpManager.createPopUp(FlexGlobals.topLevelApplication as DisplayObject, ForwardCallRequestHelpWindow);
+				ForwardCallRequestHelpWindow(popupObj).forwardMode = false;
+				PopUpManager.centerPopUp(popupObj);
+			}
+			
 		]]>
 	</mx:Script>
 	
-	<mx:DataGrid id="usersGrid" dataProvider="{users}" editable="false" sortableColumns="true"
-    	dragEnabled="false" width="100%" height="100%" draggableColumns="false"
-    	itemRollOver="onItemRollOver(event)"
-		itemRollOut="onItemRollOut(event)" 
-		tabIndex="{partOptions.baseTabIndex+5}"
-		accessibilityName="{ResourceUtil.getInstance().getString('bbb.users.usersGrid.accessibilityName')}" >
-    	<mx:columns>
-    		<mx:DataGridColumn dataField="userStatus" headerText="{ResourceUtil.getInstance().getString('bbb.users.usersGrid.statusItemRenderer')}" editable="false" width="45" minWidth="45"
-    			itemRenderer="org.bigbluebutton.modules.users.views.StatusItemRenderer" sortable="false" />
-    		<mx:DataGridColumn dataField="name" headerText="{ResourceUtil.getInstance().getString('bbb.users.usersGrid.nameItemRenderer')}" editable="false" sortable="false" minWidth="60"
-    			itemRenderer="org.bigbluebutton.modules.users.views.NameItemRenderer"/>
-    		<mx:DataGridColumn dataField="media" headerText="{ResourceUtil.getInstance().getString('bbb.users.usersGrid.mediaItemRenderer')}" sortable="false" width="110" minWidth="110"
-    			itemRenderer="org.bigbluebutton.modules.users.views.MediaItemRenderer"/>
-    	</mx:columns>
-    </mx:DataGrid>
-	
-	<mx:ControlBar width="100%">
-		<mx:Button id="raiseHandBtn" toggle="true" icon="{images.hand_new}" selected="{UserManager.getInstance().getConference().isMyHandRaised}"
-				   width="30" height="30" toolTip="{ResourceUtil.getInstance().getString('bbb.users.raiseHandBtn.toolTip')}" click="raiseHand()"
-				   visible="true" tabIndex="{partOptions.baseTabIndex+10}" />
-		<mx:Button id="settingsBtn" icon="{images.users_settings}" width="30" height="30"
-					toolTip="{ResourceUtil.getInstance().getString('bbb.users.settings.buttonTooltip')}" click="openSettings()" visible="true" tabIndex="{partOptions.baseTabIndex+15}" />
-		<mx:VBox>
-			<mx:Label text="{ResourceUtil.getInstance().getString('bbb.users.roomMuted.text')}" visible="{roomMuted}" includeInLayout="{roomMuted}" />
-			<mx:Label text="{ResourceUtil.getInstance().getString('bbb.users.roomLocked.text')}" visible="{roomLocked}" includeInLayout="{roomLocked}" />
+	<mx:TabNavigator width="100%" height="100%">
+		<mx:VBox label="Users" width="100%" height="100%">
+			<mx:DataGrid id="usersGrid" dataProvider="{users}" editable="false" sortableColumns="true"
+						 dragEnabled="false" width="100%" height="100%" draggableColumns="false"
+						 itemRollOver="onItemRollOver(event)"
+						 itemRollOut="onItemRollOut(event)" 
+						 tabIndex="{partOptions.baseTabIndex+5}"
+						 accessibilityName="{ResourceUtil.getInstance().getString('bbb.users.usersGrid.accessibilityName')}" >
+				<mx:columns>
+					<mx:DataGridColumn dataField="userStatus" headerText="{ResourceUtil.getInstance().getString('bbb.users.usersGrid.statusItemRenderer')}" editable="false" width="45" minWidth="45"
+									   itemRenderer="org.bigbluebutton.modules.users.views.StatusItemRenderer" sortable="false" />
+					<mx:DataGridColumn dataField="name" headerText="{ResourceUtil.getInstance().getString('bbb.users.usersGrid.nameItemRenderer')}" editable="false" sortable="false" minWidth="60"
+									   itemRenderer="org.bigbluebutton.modules.users.views.NameItemRenderer"/>
+					<mx:DataGridColumn dataField="media" headerText="{ResourceUtil.getInstance().getString('bbb.users.usersGrid.mediaItemRenderer')}" sortable="false" width="110" minWidth="110"
+									   itemRenderer="org.bigbluebutton.modules.users.views.MediaItemRenderer"/>
+					<mx:DataGridColumn dataField="media" headerText="" sortable="false" width="50" minWidth="50">
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:Button icon="{BitmapsData.forwardImageClass}" click="buttonClickHandler(event)">
+									<mx:Script>
+										<![CDATA[
+											import com.conxio.bbb.common.BitmapsData;
+											import mx.core.FlexGlobals;
+											import com.conxio.bbb.views.ForwardCallRequestHelpWindow;
+											import mx.managers.PopUpManager;
+											import mx.core.IFlexDisplayObject;
+											import org.bigbluebutton.main.model.users.BBBUser;
+											
+											public override function set data(value:Object):void
+											{
+												super.data = value;
+												if (value)
+												{
+													visible = BBBUser(value).userStatus == BBBUser.MODERATOR;
+												}
+											}
+											
+											private function buttonClickHandler(event:MouseEvent):void
+											{
+												var popupObj:IFlexDisplayObject = PopUpManager.createPopUp(FlexGlobals.topLevelApplication as DisplayObject, ForwardCallRequestHelpWindow);
+												var externID:String = BBBUser(data).externUserID;
+												var dbID:String = externID.substr(externID.indexOf('_') + 1);
+												ForwardCallRequestHelpWindow(popupObj).clientID = dbID;
+												PopUpManager.centerPopUp(popupObj);
+											}
+										]]>
+									</mx:Script>
+								</mx:Button>
+								
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+									   
+				</mx:columns>
+			</mx:DataGrid>
+			
+			<mx:ControlBar width="100%">
+				<mx:Button id="raiseHandBtn" toggle="true" icon="{images.hand_new}" selected="{UserManager.getInstance().getConference().isMyHandRaised}"
+						   width="30" height="30" toolTip="{ResourceUtil.getInstance().getString('bbb.users.raiseHandBtn.toolTip')}" click="raiseHand()"
+						   visible="true" tabIndex="{partOptions.baseTabIndex+10}" />
+				<mx:Button id="settingsBtn" icon="{images.users_settings}" width="30" height="30"
+						   toolTip="{ResourceUtil.getInstance().getString('bbb.users.settings.buttonTooltip')}" click="openSettings()" visible="true" tabIndex="{partOptions.baseTabIndex+15}" />
+				<mx:Button id="addOperatorBtn" icon="{BitmapsData.addOperatorClass}" width="30" height="30"
+						   click="addOperatorClick()" visible="true" tabIndex="{partOptions.baseTabIndex+16}" />
+				<mx:VBox>
+					<mx:Label text="{ResourceUtil.getInstance().getString('bbb.users.roomMuted.text')}" visible="{roomMuted}" includeInLayout="{roomMuted}" />
+					<mx:Label text="{ResourceUtil.getInstance().getString('bbb.users.roomLocked.text')}" visible="{roomLocked}" includeInLayout="{roomLocked}" />
+				</mx:VBox>
+			</mx:ControlBar>
 		</mx:VBox>
-	</mx:ControlBar>
-	
+		<mx:VBox id="callCenterBox" label="Call Centers" width="100%" height="100%">
+			<views:OperatorCallCentersControl width="100%" height="100%"/>
+		</mx:VBox>
+	</mx:TabNavigator>
 </mdi:CustomMdiWindow>

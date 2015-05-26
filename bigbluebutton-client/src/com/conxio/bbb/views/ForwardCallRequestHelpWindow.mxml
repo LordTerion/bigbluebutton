@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="500" addedToStage="addedToStageHandler(event)" close="closeHandler(event)" showCloseButton="true">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.conxio.bbb.common.BitmapsData;
+			import com.conxio.bbb.services.MainServiceAPI;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.CloseEvent;
+			import mx.events.ListEvent;
+			import mx.managers.PopUpManager;
+			
+			import org.bigbluebutton.core.managers.UserManager;
+			
+			public var clientID:String;
+			
+			[Bindable]
+			public var forwardMode:Boolean = true;
+			
+			protected function addedToStageHandler(event:Event):void
+			{
+				MainServiceAPI.getListOfFreeOperators(listLoaded);
+			}
+			
+			private function listLoaded(data:String):void 
+			{
+				var listData:Array = JSON.parse(data) as Array;
+				var curOperatorID:String = UserManager.getInstance().getConference().getMyDBUserID();
+				for each (var callCenterObj:Object in listData) 
+				{
+					callCenterObj.children = [];
+					for each (var operatorObj:Object in callCenterObj.CallCenterOperators) 
+					{
+						if (operatorObj.Id != curOperatorID)
+							callCenterObj.children.push(operatorObj);
+					}
+				}
+				tree.dataProvider = new ArrayCollection(listData);
+			}
+			
+			protected function closeHandler(event:CloseEvent):void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			
+			protected function treeIconFuction(item:Object):Class
+			{
+				if (item.children && item.children.length != 0)
+				{
+					return BitmapsData.callCenterImageClass;
+				}
+				else
+				{
+					return BitmapsData.operatorImageClass;
+				}
+			}
+			
+			protected function tree_changeHandler(event:ListEvent):void
+			{
+				if (tree.selectedItem)
+				{
+					if (tree.selectedItem.children)
+					{
+						forwardButton.enabled = tree.selectedItem.children.length == 0;
+					}
+					else
+					{
+						forwardButton.enabled = true;
+					}
+				}
+			}
+			
+			private function forwardButton_clickHandler(event:MouseEvent):void
+			{
+				var selectedOperatorID:String = tree.selectedItem.Id;
+				var ownerOperatorID:String = UserManager.getInstance().getConference().getMyDBUserID();
+				if (forwardMode)
+				{
+					MainServiceAPI.forwardCallToOperator(selectedOperatorID, clientID, forwardCallHandler);
+				}
+				else
+				{
+					MainServiceAPI.inviteOperator(selectedOperatorID, ownerOperatorID, inviteOperatorHandler);
+				}
+				
+			}
+			
+			private function forwardCallHandler(data:*):void
+			{
+				trace();
+			}
+			
+			private function inviteOperatorHandler(data:*):void
+			{
+				// TODO Auto Generated method stub
+				
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Tree id="tree" width="100%" height="100%" labelField="Name" iconFunction="treeIconFuction" change="tree_changeHandler(event)"/>
+	<mx:Button id="forwardButton" label="{forwardMode ? 'Forward' : 'Send request'}" enabled="false" click="forwardButton_clickHandler(event)"/>
+</mx:TitleWindow>

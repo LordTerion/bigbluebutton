@@ -27,6 +27,7 @@ package org.bigbluebutton.main.events
 		public static const JOINED:String = 'user has joined event';
 		
 		public var userID:String;
+		public var externUserID:String;
     
 		public function UserJoinedEvent(type:String, bubbles:Boolean=true, cancelable:Boolean=false)
 		{

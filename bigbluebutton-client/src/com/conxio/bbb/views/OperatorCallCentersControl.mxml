@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:s="library://ns.adobe.com/flex/spark" creationComplete="creationCompleteHandler(event)">
+	<mx:Script>
+		<![CDATA[
+			import com.conxio.bbb.services.MainServiceAPI;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.FlexEvent;
+			
+			import org.bigbluebutton.core.managers.UserManager;
+			[Bindable]
+			private var dataProv:ArrayCollection;
+			
+			private function creationCompleteHandler(event:FlexEvent):void
+			{
+				var curUserID:String = UserManager.getInstance().getConference().getMyExternalUserID();
+				if (curUserID.toLowerCase().indexOf("operator") == -1)
+					return;
+				curUserID = curUserID.substr(9);
+				MainServiceAPI.getCallCentersMsg(curUserID, onGetCallCenters);
+			}
+			
+			private function onGetCallCenters(data:String):void
+			{
+				var dataArray:Array = JSON.parse(data) as Array;
+				for each (var callCenterObj:Object in dataArray) 
+				{
+					callCenterObj.Status = 1;
+				}
+				dataProv = new ArrayCollection(dataArray);
+			}
+			
+			private function statusLabelFunction(item:Object, column:DataGridColumn):String
+			{
+				if (item[column.dataField] == 1)
+				{ 
+					return "Online";
+				}
+				else
+				{
+					return "Offline";
+				}
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:DataGrid id="usersGrid" dataProvider="{dataProv}" editable="false" dragEnabled="false" 
+				 width="100%" height="100%" draggableColumns="false">
+		<mx:columns>
+			<mx:DataGridColumn dataField="Name" headerText="Call center name" editable="false" width="60" minWidth="45"/>
+			<mx:DataGridColumn dataField="Status" headerText="Status" editable="false" sortable="false" minWidth="40">
+				<mx:itemRenderer>
+					<mx:Component>
+						<mx:DataGridItemRenderer>
+							<mx:Script>
+								<![CDATA[
+									public override function set data(value:Object):void
+									{
+										if (value)
+										{
+											if (value.Status == 1)
+											{
+												listData.label = "Online";
+												setStyle("color", "0x4ECD51");
+											}
+											else
+											{
+												listData.label = "Offline";
+												setStyle("color", "0xEB3636");
+											}
+											
+										}
+									}
+								]]>
+							</mx:Script>
+						</mx:DataGridItemRenderer>
+					</mx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="" editable="false" sortable="false" minWidth="60">
+				<mx:itemRenderer>
+					<mx:Component>
+						<mx:ToggleButtonBar itemClick="itemClickHandler(event)" selectedIndex="1">
+							<mx:Script>
+								<![CDATA[
+									import mx.controls.DataGrid;
+									import mx.events.ItemClickEvent;
+									import mx.collections.ArrayCollection;
+									import com.conxio.bbb.services.MainServiceAPI;
+									import org.bigbluebutton.core.managers.UserManager;
+									
+									private function itemClickHandler(event:ItemClickEvent):void
+									{
+										if (data.Status == this.selectedIndex)
+											return;
+										data.Status = this.selectedIndex;
+										var operatorID:String = UserManager.getInstance().getConference().getMyDBUserID();
+										MainServiceAPI.changeCallCenterOperatorAvailabilityMsg(operatorID, data.Id, data.Status, null);
+										ArrayCollection(DataGrid(this.owner).dataProvider).refresh();
+									}
+								]]>
+							</mx:Script>
+							<mx:dataProvider>
+								<mx:Array>
+									<mx:String>Offline</mx:String>
+									<mx:String>Online</mx:String>
+								</mx:Array>
+							</mx:dataProvider>
+						</mx:ToggleButtonBar>
+					</mx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+		</mx:columns>
+	</mx:DataGrid>
+</mx:VBox>

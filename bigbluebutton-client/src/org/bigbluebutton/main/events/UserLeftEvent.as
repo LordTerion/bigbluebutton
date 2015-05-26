@@ -27,6 +27,7 @@ package org.bigbluebutton.main.events
 		public static const LEFT:String = 'user has left event';
 		
 		public var userID:String;
+		public var externUserID:String;
     
 		public function UserLeftEvent(type:String, bubbles:Boolean=true, cancelable:Boolean=false)
 		{

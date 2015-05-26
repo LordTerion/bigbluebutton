@@ -2,25 +2,44 @@
 <EventMap xmlns:mx="http://www.adobe.com/2006/mxml" xmlns="http://mate.asfusion.com/" >
 	<mx:Script>
 		<![CDATA[
+			import com.asfusion.mate.actionLists.IScope;
 			import com.conxio.bbb.managers.ClientManager;
+			
+			import org.bigbluebutton.core.managers.UserManager;
 			import org.bigbluebutton.main.events.BBBEvent;
 			import org.bigbluebutton.main.events.UserJoinedEvent;
 			import org.bigbluebutton.main.events.UserLeftEvent;
+			
+			private static function checkIfUserIsOperator(scope:IScope):Boolean
+			{
+				var curUserExtID:String = UserManager.getInstance().getConference().getMyExternalUserID();
+				if (curUserExtID && curUserExtID.toLowerCase().indexOf("operator") != -1)
+					return false;
+				//This is a client
+				return true;
+			}
+			
 		]]>
 	</mx:Script>
-	<EventHandlers type="{UserJoinedEvent.JOINED}" >
+	<EventHandlers type="{UserJoinedEvent.JOINED}">
+		<MethodInvoker generator="{ClientManager}" method="checkIfOwnerJoined" arguments="{event}"/>
+		<StopHandlers stopFunction="checkIfUserIsOperator"/>
 		<MethodInvoker generator="{ClientManager}" method="handleUserJoined" arguments="{event}"/> 
 	</EventHandlers>
 	
-	<EventHandlers type="{UserLeftEvent.LEFT}" >
+	<EventHandlers type="{UserLeftEvent.LEFT}">
+		<MethodInvoker generator="{ClientManager}" method="handleOperatorLeft" arguments="{event}"/>
+		<StopHandlers stopFunction="checkIfUserIsOperator"/>
 		<MethodInvoker generator="{ClientManager}" method="handleUserLeft" arguments="{event}"/> 
 	</EventHandlers>
 	
 	<EventHandlers type="{BBBEvent.USER_VOICE_JOINED}" >
+		<StopHandlers stopFunction="checkIfUserIsOperator"/>
 		<MethodInvoker generator="{ClientManager}" method="handleUserVoiceJoined" arguments="{event}"/> 
 	</EventHandlers>
 	
 	<EventHandlers type="{BBBEvent.USER_VOICE_LEFT}" >
+		<StopHandlers stopFunction="checkIfUserIsOperator"/>
 		<MethodInvoker generator="{ClientManager}" method="handleUserVoiceLeft" arguments="{event}"/> 
 	</EventHandlers>
 </EventMap>

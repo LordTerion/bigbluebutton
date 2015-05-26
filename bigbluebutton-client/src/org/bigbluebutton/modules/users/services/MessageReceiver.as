@@ -386,6 +386,7 @@ package org.bigbluebutton.modules.users.services
       
       var joinEvent:UserLeftEvent = new UserLeftEvent(UserLeftEvent.LEFT);
       joinEvent.userID = user.userID;
+	  joinEvent.externUserID = user.externUserID;
       dispatcher.dispatchEvent(joinEvent);	
       
       UserManager.getInstance().getConference().removeUser(webUserId);	        
@@ -558,6 +559,7 @@ package org.bigbluebutton.modules.users.services
            
       var joinEvent:UserJoinedEvent = new UserJoinedEvent(UserJoinedEvent.JOINED);
       joinEvent.userID = user.userID;
+	  joinEvent.externUserID = user.externUserID;
       dispatcher.dispatchEvent(joinEvent);	
    
     }

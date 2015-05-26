@@ -1,6 +1,8 @@
 package com.conxio.bbb.managers
 {
 	import com.asfusion.mate.events.Dispatcher;
+	import com.conxio.bbb.api.ExternallinterfaceAPI;
+	import com.conxio.bbb.services.MainServiceAPI;
 	
 	import flash.events.Event;
 	import flash.net.URLLoader;
@@ -8,10 +10,13 @@ package com.conxio.bbb.managers
 	import flash.net.URLRequest;
 	import flash.net.URLRequestMethod;
 	import flash.net.URLVariables;
+	import flash.net.navigateToURL;
 	
+	import org.bigbluebutton.core.managers.UserManager;
 	import org.bigbluebutton.main.events.BBBEvent;
 	import org.bigbluebutton.main.events.UserJoinedEvent;
 	import org.bigbluebutton.main.events.UserLeftEvent;
+	import org.bigbluebutton.main.model.users.BBBUser;
 	
 	public class ClientManager
 	{
@@ -25,13 +30,22 @@ package com.conxio.bbb.managers
 		}
 		
 		public function handleUserJoined(event:UserJoinedEvent):void{
-			var userID:String = event.userID;
+			var userID:String = event.externUserID;
 			userJoined(userID);
 		}
 
 		public function handleUserLeft(event:UserLeftEvent):void{
-			var userID:String = event.userID;
+			var userID:String = event.externUserID;
 			userLeft(userID);
+		}
+		
+		public function handleOperatorLeft(event:UserLeftEvent):void{
+			var userID:String = event.externUserID;
+			if (userID.toLowerCase().indexOf("operator") != -1)
+			{
+				UserManager.getInstance().getConference().removeAllParticipants();
+				navigateToURL(new URLRequest("http://streaming.conx.io:40001"));
+			}
 		}
 		
 		public function handleUserVoiceJoin(event:BBBEvent):void{
@@ -45,41 +59,39 @@ package com.conxio.bbb.managers
 		}
 		
 		private function userJoined(userID:String):void{
+			if (userID.toLowerCase().indexOf("client") == -1)
+				return;
 			if (usersHash.hasOwnProperty(userID))
 				return;
+			userID = userID.substr(7);
 			usersHash[userID] = new Date().getTime();
 			logMessage("user with ID=" + userID + " joined.");
-		}
+			MainServiceAPI.clientJoinMsg(userID);
+		} 
 		
 		private function userLeft(userID:String):void{
+			if (userID.toLowerCase().indexOf("client") == -1)
+				return;
+			userID = userID.substr(7);
 			if (!usersHash.hasOwnProperty(userID))
 				return;
 			var oldTime:Number = usersHash[userID];
 			var nowTime:Number = new Date().getTime();
-			var spentTime:Number = nowTime - oldTime;
-			var seconds:int = (spentTime/1000)%60;
-			var minutes:int=(spentTime/(1000*60))%60;
-			var hours:int=(spentTime/(1000*60*60))%24;
+			var duration:Number = nowTime - oldTime;
+			var seconds:int = (duration/1000)%60;
+			var minutes:int=(duration/(1000*60))%60;
+			var hours:int=(duration/(1000*60*60))%24;
 			logMessage("user with ID=" + userID + " has left.");
 			logMessage("user with ID=" + userID + " spent " + hours + ":" + minutes + ":" + seconds);
-			var urlReq:URLRequest = new URLRequest("http://192.168.72.129:40001/api/manage/kiosk/:sendKioskStats");
-			urlReq.method = URLRequestMethod.GET;
-			var requestVars:URLVariables = new URLVariables();
-			requestVars.UserDuration = spentTime;
-			urlReq.data = requestVars;
-//			urlReq.data = "UserDuration="+spentTime;
-			var urlLoader:URLLoader = new URLLoader();
-			urlLoader.dataFormat = URLLoaderDataFormat.TEXT;
-			urlLoader.addEventListener(Event.COMPLETE,  function(event:Event):void{
-				trace();
-			});
-			try
+			MainServiceAPI.clientLeaveMsg(userID, nowTime, duration);
+		}
+		
+		public function checkIfOwnerJoined(event:UserJoinedEvent):void
+		{
+			var user:BBBUser = UserManager.getInstance().getConference().getUser(event.userID);
+			if (user.me)
 			{
-				urlLoader.load(urlReq);
-			} 
-			catch(error:Error) 
-			{
-				
+				ExternallinterfaceAPI.init();
 			}
 		}
 		
