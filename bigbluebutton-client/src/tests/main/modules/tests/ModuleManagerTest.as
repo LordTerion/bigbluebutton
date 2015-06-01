@@ -26,7 +26,7 @@ package tests.main.modules.tests
 		
 		[Before]
 		public function setUp():void{
-			moduleManager = new ModuleManager();
+			moduleManager = new ModuleManager(null);
 		}
 		
 		[After]

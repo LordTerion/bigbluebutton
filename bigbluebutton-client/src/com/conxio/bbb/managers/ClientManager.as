@@ -13,6 +13,8 @@ package com.conxio.bbb.managers
 	import flash.net.navigateToURL;
 	
 	import org.bigbluebutton.core.managers.UserManager;
+	import org.bigbluebutton.core.model.MeetingModel;
+	import org.bigbluebutton.core.model.users.UsersModel;
 	import org.bigbluebutton.main.events.BBBEvent;
 	import org.bigbluebutton.main.events.UserJoinedEvent;
 	import org.bigbluebutton.main.events.UserLeftEvent;
@@ -43,8 +45,13 @@ package com.conxio.bbb.managers
 			var userID:String = event.externUserID;
 			if (userID.toLowerCase().indexOf("operator") != -1)
 			{
-				UserManager.getInstance().getConference().removeAllParticipants();
-				navigateToURL(new URLRequest("http://streaming.conx.io:40001"));
+				sendPersonLeave(UserManager.getInstance().getConference().getMyExternalUserID(), onComplete);
+				function onComplete():void
+				{
+					UserManager.getInstance().getConference().removeAllParticipants();
+					var logoutURL:String = MeetingModel.getInstance().meeting.customDataObj.logoutURLClient;
+					navigateToURL(new URLRequest(logoutURL), "_self");
+				}
 			}
 		}
 		
@@ -59,23 +66,37 @@ package com.conxio.bbb.managers
 		}
 		
 		private function userJoined(userID:String):void{
-			if (userID.toLowerCase().indexOf("client") == -1)
-				return;
+			var isClient:Boolean = userID.toLowerCase().indexOf("client") != -1;
+			var isOperatorMode:Boolean = UsersModel.getInstance().me.isOperator;
 			if (usersHash.hasOwnProperty(userID))
 				return;
-			userID = userID.substr(7);
 			usersHash[userID] = new Date().getTime();
 			logMessage("user with ID=" + userID + " joined.");
-			MainServiceAPI.clientJoinMsg(userID);
+			if (isClient && isOperatorMode)
+			{
+				var index:int = userID.indexOf("_");
+				userID = userID.substr(index + 1);
+				MainServiceAPI.clientJoinMsg(userID);
+			}
 		} 
 		
 		private function userLeft(userID:String):void{
-			if (userID.toLowerCase().indexOf("client") == -1)
-				return;
-			userID = userID.substr(7);
+			var isClient:Boolean = userID.toLowerCase().indexOf("client") != -1;
+			var isOperatorMode:Boolean = UsersModel.getInstance().me.isOperator;
 			if (!usersHash.hasOwnProperty(userID))
 				return;
+			delete usersHash[userID];
+			if (isClient && isOperatorMode)
+			{
+				sendPersonLeave(userID);
+			}
+		}
+		
+		private function sendPersonLeave(userID:String, callBack:Function = null):void
+		{
 			var oldTime:Number = usersHash[userID];
+			var index:int = userID.indexOf("_");
+			userID = userID.substr(index + 1);
 			var nowTime:Number = new Date().getTime();
 			var duration:Number = nowTime - oldTime;
 			var seconds:int = (duration/1000)%60;
@@ -83,7 +104,7 @@ package com.conxio.bbb.managers
 			var hours:int=(duration/(1000*60*60))%24;
 			logMessage("user with ID=" + userID + " has left.");
 			logMessage("user with ID=" + userID + " spent " + hours + ":" + minutes + ":" + seconds);
-			MainServiceAPI.clientLeaveMsg(userID, nowTime, duration);
+			MainServiceAPI.personLeaveMsg(userID, nowTime, duration, callBack);
 		}
 		
 		public function checkIfOwnerJoined(event:UserJoinedEvent):void

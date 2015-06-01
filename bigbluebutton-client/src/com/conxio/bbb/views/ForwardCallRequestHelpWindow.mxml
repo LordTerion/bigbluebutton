@@ -7,6 +7,7 @@
 			import com.conxio.bbb.services.MainServiceAPI;
 			
 			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
 			import mx.events.CloseEvent;
 			import mx.events.ListEvent;
 			import mx.managers.PopUpManager;
@@ -75,28 +76,31 @@
 			{
 				var selectedOperatorID:String = tree.selectedItem.Id;
 				var ownerOperatorID:String = UserManager.getInstance().getConference().getMyDBUserID();
+				cursorManager.setBusyCursor();
 				if (forwardMode)
 				{
-					MainServiceAPI.forwardCallToOperator(selectedOperatorID, clientID, forwardCallHandler);
+					MainServiceAPI.forwardCallToOperator(selectedOperatorID, clientID, forwardInviteCallHandler);
 				}
 				else
 				{
-					MainServiceAPI.inviteOperator(selectedOperatorID, ownerOperatorID, inviteOperatorHandler);
+					MainServiceAPI.inviteOperator(selectedOperatorID, ownerOperatorID, forwardInviteCallHandler);
 				}
 				
 			}
 			
-			private function forwardCallHandler(data:*):void
+			private function forwardInviteCallHandler(data:String):void
 			{
-				trace();
+				cursorManager.removeBusyCursor();
+				var dataObj:Object = JSON.parse(data);
+				if (String(dataObj.status).toUpperCase() == "SUCCESS")
+				{
+					closeHandler(null);
+				}
+				else
+				{
+					Alert.show("Please select another operator or try again.", "Message");
+				}
 			}
-			
-			private function inviteOperatorHandler(data:*):void
-			{
-				// TODO Auto Generated method stub
-				
-			}
-			
 		]]>
 	</mx:Script>
 	<mx:Tree id="tree" width="100%" height="100%" labelField="Name" iconFunction="treeIconFuction" change="tree_changeHandler(event)"/>

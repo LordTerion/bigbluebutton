@@ -9,16 +9,22 @@ package org.bigbluebutton.core.model
     private var _layout: String;
     private var _avatarURL: String;
     private var _logoutURL: String;
+    private var _isOperator:Boolean;
     
     public function Me(builder: MeBuilder) {
       _id = builder.id;
       _name = builder.name;
       _externalId = builder.externalId;
+	  _isOperator = externalId.toLowerCase().indexOf("operator") != -1;
       _token = builder.token;
       _layout = builder.layout;
       _logoutURL = builder.logoutURL;
     }
     
+	public function get isOperator():Boolean{
+		return _isOperator;
+	}
+
     public function get id():String {
       return _id;
     }
@@ -42,5 +48,7 @@ package org.bigbluebutton.core.model
     public function get logoutURL():String {
       return _logoutURL;
     }
+	
+	
   }
 }

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="vertical" verticalAlign="middle" horizontalAlign="center" title="Please confirm" creationComplete="creationCompleteHandler(event)">
+	<mx:Script>
+		<![CDATA[
+			import flash.utils.setTimeout;
+			
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			[Bindable]
+			public var message:String;
+			public var closeCallBack:Function;
+
+			private var timer:Timer;
+			
+			private function button_clickHandler(result:Boolean):void
+			{
+				if (closeCallBack != null)
+					closeCallBack(result);
+				if (result)
+				{
+					dispatchEvent(new CloseEvent(CloseEvent.CLOSE, false, true, Alert.YES));
+				}
+				else
+				{
+					dispatchEvent(new CloseEvent(CloseEvent.CLOSE, false, true, Alert.NO));
+				}
+			}
+			
+			protected function creationCompleteHandler(event:Event):void
+			{
+				timer = new Timer(15000, 1);
+				timer.addEventListener(TimerEvent.TIMER_COMPLETE, onTimerComplete);
+			}
+			
+			private function onTimerComplete(event:TimerEvent):void
+			{
+				timer.removeEventListener(TimerEvent.TIMER_COMPLETE, onTimerComplete);
+				timer = null;
+				button_clickHandler(false);
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label id="messageLbl" width="100%" textAlign="center" text="{message}"/>
+	<mx:HBox width="100%" horizontalAlign="center">
+		<mx:Button label="Accept" click="button_clickHandler(true)"/>
+		<mx:Button label="Reject" click="button_clickHandler(false)"/>
+	</mx:HBox>
+</mx:TitleWindow>

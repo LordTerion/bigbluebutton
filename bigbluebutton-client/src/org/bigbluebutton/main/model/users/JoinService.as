@@ -19,14 +19,19 @@
 package org.bigbluebutton.main.model.users
 {
 	import com.asfusion.mate.events.Dispatcher;
+	import com.conxio.bbb.services.MainServiceAPI;
 	
-	import flash.events.*;
+	import flash.events.Event;
+	import flash.events.HTTPStatusEvent;
+	import flash.events.IOErrorEvent;
 	import flash.net.URLLoader;
 	import flash.net.URLRequest;
 	import flash.net.URLRequestMethod;
 	import flash.net.URLVariables;
 	import flash.net.navigateToURL;
-	import mx.collections.ArrayCollection;	
+	
+	import mx.collections.ArrayCollection;
+	
 	import org.bigbluebutton.common.LogUtil;
 	import org.bigbluebutton.core.BBB;
 	import org.bigbluebutton.core.model.Me;
@@ -89,7 +94,7 @@ package org.bigbluebutton.main.model.users
 			if (returncode == 'FAILED') {
 				trace(LOG + "Join FAILED = " + JSON.stringify(result));						
         var dispatcher:Dispatcher = new Dispatcher();
-        dispatcher.dispatchEvent(new MeetingNotFoundEvent(result.response.logoutURL));			
+        dispatcher.dispatchEvent(new MeetingNotFoundEvent(result.response.logoutURL));
 			} else if (returncode == 'SUCCESS') {
 				trace("Join SUCESS = " + JSON.stringify(result));
         var response:Object = new Object();
@@ -109,10 +114,10 @@ package org.bigbluebutton.main.model.users
         response.dialnumber = result.response.dialnumber;
         response.voicebridge = result.response.voicebridge;
         response.mode = result.response.mode;
-        response.welcome = result.response.welcome;
+        response.welcome = JSON.parse(result.response.welcome).welcomeMessage;
         response.logoutUrl = result.response.logoutUrl;
         response.defaultLayout = result.response.defaultLayout;
-        response.avatarURL = result.response.avatarURL
+        response.avatarURL = result.response.avatarURL;
         
         if (result.response.hasOwnProperty("modOnlyMessage")) {
           response.modOnlyMessage = result.response.modOnlyMessage;
@@ -144,9 +149,11 @@ package org.bigbluebutton.main.model.users
                                              .withDefaultLayout(response.defaultLayout).withVoiceConf(response.voiceBridge)
                                              .withExternalId(response.externMeetingID).withRecorded(response.record.toUpperCase() == "TRUE")
                                              .withDefaultAvatarUrl(response.avatarURL).withDialNumber(response.dialNumber)
-                                             .withWelcomeMessage(response.welcome).withModOnlyMessage(response.modOnlyMessage)
+                                             .withWelcomeMessage(result.response.welcome).withModOnlyMessage(response.modOnlyMessage)
                                              .withAllowStartStopRecording(response.allowStartStopRecording)
                                              .build();
+		MainServiceAPI.kioskServerURL = MeetingModel.getInstance().meeting.customDataObj.kioskApiURL;
+		MainServiceAPI.operatorServerURL = MeetingModel.getInstance().meeting.customDataObj.operatorApiURL;
         
 				if (_resultListener != null) _resultListener(true, response);
 			}

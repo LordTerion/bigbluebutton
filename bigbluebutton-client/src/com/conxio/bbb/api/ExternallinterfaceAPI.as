@@ -1,5 +1,7 @@
 package com.conxio.bbb.api
 {
+	import com.conxio.bbb.managers.ConfirmationPopupManager;
+	
 	import flash.events.Event;
 	import flash.external.ExternalInterface;
 	import flash.net.URLRequest;
@@ -9,6 +11,7 @@ package com.conxio.bbb.api
 	import mx.events.CloseEvent;
 	
 	import org.bigbluebutton.core.managers.UserManager;
+	import org.bigbluebutton.core.model.MeetingModel;
 
 	public class ExternallinterfaceAPI
 	{
@@ -39,6 +42,8 @@ package com.conxio.bbb.api
 		
 		private static function handleInviteConfirmationRequestMessage():void
 		{
+			ConfirmationPopupManager.instance.show("Operator ask you to join him", sendInviteConfirmationResponse);
+			/*
 			Alert.yesLabel = "Accept";
 			Alert.noLabel = "Reject";
 			Alert.show("Operator ask you to join him", "Please confirm", Alert.YES | Alert.NO, null, alertCloseHandler);
@@ -54,7 +59,7 @@ package com.conxio.bbb.api
 				}
 				Alert.yesLabel = "YES";
 				Alert.noLabel = "NO";
-			}
+			}*/
 		}
 		
 		private static function handleforwardClientEventMessage(message:Object):void
@@ -74,7 +79,8 @@ package com.conxio.bbb.api
 					var underscoreIndex:int = curUserID.indexOf("_");
 					var userType:String = curUserID.substring(0, underscoreIndex);
 					var userID:String = curUserID.substring(underscoreIndex + 1);
-					ExternalInterface.call("initSocketAPI", userID, userType);
+					var socketUrl:String = MeetingModel.getInstance().meeting.customDataObj.socketURL;
+					ExternalInterface.call("initSocketAPI", userID, userType, socketUrl);
 					initializationComplete=true;
 				}
 			}
@@ -82,6 +88,8 @@ package com.conxio.bbb.api
 		
 		private static function handleConnectConfirmationRequestMessage():void
 		{
+			ConfirmationPopupManager.instance.show("Client request connection", sendConnectionConfirmationResponse);
+			/*
 			Alert.yesLabel = "Accept";
 			Alert.noLabel = "Reject";
 			Alert.show("Client request connection", "Please confirm", Alert.YES | Alert.NO, null, alertCloseHandler);
@@ -97,14 +105,16 @@ package com.conxio.bbb.api
 				}
 				Alert.yesLabel = "YES";
 				Alert.noLabel = "NO";
-			}
+			}*/
 		}
 		
 		private static function handleForwardConfirmationRequestMessage():void
 		{
+			ConfirmationPopupManager.instance.show("Operator wants to forward a call to you", sendForwardConfirmationResponse);
+			/*
 			Alert.yesLabel = "Accept";
 			Alert.noLabel = "Reject";
-			Alert.show("Operator wants to forward call to you", "Please confirm", Alert.YES | Alert.NO, null, alertCloseHandler);
+			Alert.show("Operator wants to forward a call to you", "Please confirm", Alert.YES | Alert.NO, null, alertCloseHandler);
 			function alertCloseHandler(event:CloseEvent):void
 			{
 				if (event.detail == Alert.YES)
@@ -118,24 +128,9 @@ package com.conxio.bbb.api
 				Alert.yesLabel = "YES";
 				Alert.noLabel = "NO";
 			}
+			*/
 		}
 		
-		
-		private static function handleReceiveAPIMessage(message:String):void
-		{
-			if (message == "TestMessage")
-				sendAPIMessage("hello server");
-			if (message == "TestMessage2")
-				Alert.show("test2");
-		}
-
-		public static function sendAPIMessage(message:String):void
-		{
-			if (ExternalInterface.available)
-			{
-				ExternalInterface.call("sendAPIMessage", message);
-			}
-		}
 		
 		public static function sendConnectionConfirmationResponse(result:Boolean):void
 		{

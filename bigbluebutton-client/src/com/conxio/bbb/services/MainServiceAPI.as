@@ -66,7 +66,7 @@ package com.conxio.bbb.services
 			}
 		}
 		
-		public static function clientLeaveMsg(clientID:String, endTime:Number, duration:Number):void
+		public static function personLeaveMsg(clientID:String, endTime:Number, duration:Number, callBack:Function):void
 		{
 			var urlReq:URLRequest = new URLRequest(kioskServerURL + "/api/manage/kiosk/flashApi/closeClientSession");
 			urlReq.method = URLRequestMethod.POST;
@@ -90,7 +90,8 @@ package com.conxio.bbb.services
 			
 			function onComplete(event:Event):void
 			{
-				
+				if (callBack != null)
+					callBack();	
 			}
 		}
 		
